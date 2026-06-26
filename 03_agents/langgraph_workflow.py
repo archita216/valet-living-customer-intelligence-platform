@@ -19,7 +19,7 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parent))
 
 from sql_agent import sql_agent
-from groq_rag_agent import rag_agent
+from groq_rag_agent import ask as rag_agent
 from recommendation_agent import recommendation_agent
 
 
