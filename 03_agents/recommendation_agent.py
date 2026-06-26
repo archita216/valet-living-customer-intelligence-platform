@@ -1,7 +1,7 @@
 """
 recommendation_agent.py
 -----------------------
-Valet Living Recommendation Agent
+Valet Living Recommendation Agent with LangFuse tracing
 - Takes SQL findings + RAG complaint context
 - Uses Groq LLM to generate strategic recommendations
 - Acts as the final node in the LangGraph workflow
@@ -9,12 +9,15 @@ Valet Living Recommendation Agent
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=True)
+
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
-
-# ── Load environment variables ──
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+from langfuse import observe
 
 GROQ_MODEL = "llama-3.1-8b-instant"
 
@@ -55,6 +58,8 @@ RECOMMENDED ACTIONS:
 Be specific, concise, and business-focused.
 """)
 
+# LangFuse decorator to observe the function
+@observe(name="recommendation_agent")  
 
 def recommendation_agent(question: str, sql_result: str, rag_result: str) -> str:
     """

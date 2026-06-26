@@ -1,7 +1,8 @@
 """
 langgraph_workflow.py
 ---------------------
-Valet Living LangGraph Multi-Agent Workflow
+Valet Living LangGraph Multi-Agent Workflow with LangFuse Tracing
+- Defines a multi-agent workflow using LangGraph
 - Orchestrates SQL Agent, RAG Agent, and Recommendation Agent
 - Uses LangGraph to define the flow between agents
 - Entry point for the full multi-agent pipeline
@@ -11,9 +12,15 @@ START → SQL Agent → RAG Agent → Recommendation Agent → END
 """
 
 from typing import TypedDict
-from langgraph.graph import StateGraph, END
 from pathlib import Path
 import sys
+
+from dotenv import load_dotenv
+from langgraph.graph import StateGraph, END
+from langfuse import observe
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=True)
 
 # Add parent directory to path so agents can be imported
 sys.path.append(str(Path(__file__).resolve().parent))
@@ -84,7 +91,7 @@ def build_workflow() -> StateGraph:
 
     return workflow.compile()
 
-
+@observe(name="valet_living_pipeline")  # traces entire pipeline in LangFuse
 def run_pipeline(question: str) -> dict:
     """
     Run the full multi-agent pipeline for a given question.

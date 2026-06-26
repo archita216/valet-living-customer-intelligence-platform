@@ -1,5 +1,5 @@
 """
-Valet Living RAG Agent:
+Valet Living RAG Agent with LangFuse tracing:
 
 - Loads the FAISS vector DB built from 100k complaint records
 - Uses HuggingFace embeddings for semantic search
@@ -11,15 +11,18 @@ Valet Living RAG Agent:
 import os
 import argparse
 from pathlib import Path
+
 from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=True)
+
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-
-# ── Load environment variables ──
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+from langfuse import observe
 
 # ── Configuration ──
 VECTOR_DB_DIR       = Path(__file__).resolve().parent.parent / "02_rag" / "valet_vector_db"
@@ -103,12 +106,13 @@ def get_rag_chain():
     print("RAG chain ready.\n")
     return _chain
 
+#Langfuse decorator to observe the function
+@observe(name="rag_agent") 
 def ask(question: str) -> str:
     """Ask a question and get a natural language answer from the RAG agent."""
     chain  = get_rag_chain()
     result = chain.invoke(question)
     return result.content if hasattr(result, "content") else str(result)
-
 
 def main():
     parser = argparse.ArgumentParser(

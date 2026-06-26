@@ -1,5 +1,5 @@
 """
-Valet Living SQL Agent:
+Valet Living SQL Agent with LangFuse Tracing:
 
 - Connects to Azure SQL using pyodbc
 - Maps natural language questions to SQL queries
@@ -10,10 +10,13 @@ Valet Living SQL Agent:
 import os
 import pyodbc
 from pathlib import Path
+
 from dotenv import load_dotenv
 
-# ── Load environment variables ──
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=True)
+
+from langfuse import observe
 
 # ── Database connection config ──
 SQL_SERVER   = os.getenv("SQL_SERVER")
@@ -59,6 +62,8 @@ def run_query(query: str) -> list:
         if conn:
             conn.close()
 
+# Langfuse context for observability
+@observe(name="sql_agent")
 
 def sql_agent(question: str) -> str:
     """
@@ -254,7 +259,6 @@ def sql_agent(question: str) -> str:
 
     except RuntimeError as e:
         return f"Database error: {e}"
-
 
 def main():
     """Test the SQL agent with sample questions."""
