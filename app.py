@@ -755,6 +755,9 @@ def main():
     with tab_dashboard:
         st.markdown("<h2 style='margin-bottom:1rem; color: white;'>Property Portfolio Performance</h2>", unsafe_allow_html=True)
         
+        if is_sandbox:
+            st.warning("⚠️ **Sandbox Mode Active**: Azure SQL Database is offline or unreachable. Visualizing aggregated complaints from local historical records combined with simulated financial values.")
+            
         # Display KPI cards grid
         render_kpi_cards(df_churn)
         
