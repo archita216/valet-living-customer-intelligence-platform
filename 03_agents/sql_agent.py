@@ -26,6 +26,26 @@ SQL_PASSWORD = os.getenv("SQL_PASSWORD")
 SQL_DRIVER   = "ODBC Driver 18 for SQL Server"
 
 
+SUPPORTED_SQL_PATTERNS = {
+    "high churn risk": ["high churn", "churn risk", "at risk of churn"],
+    "low csat": ["worst csat", "low csat", "satisfaction"],
+    "missed pickups": ["missed pickup", "missed pickups"],
+    "contract value at risk": ["contract", "revenue at risk"],
+    "service performance": ["service performance", "service category"],
+    "property health": ["property health", "worst property"],
+    "renewal timing": ["renewal", "renewing soon"],
+}
+
+
+def can_handle_question(question: str) -> bool:
+    """Return True when the question matches one of the predefined SQL intents."""
+    question_lower = question.lower()
+    return any(
+        any(pattern in question_lower for pattern in patterns)
+        for patterns in SUPPORTED_SQL_PATTERNS.values()
+    )
+
+
 def get_connection():
     """Create and return a connection to Azure SQL."""
     conn_str = (
@@ -77,9 +97,16 @@ def sql_agent(question: str) -> str:
     """
     question_lower = question.lower()
 
+    if not can_handle_question(question):
+        return (
+            "I do not have a predefined SQL mapping for that question yet. "
+            "Try asking about churn risk, CSAT, missed pickups, contract value, "
+            "service performance, property health, or renewal timing."
+        )
+
     # ── Route question to appropriate SQL query ──
 
-    if "high churn" in question_lower or "churn risk" in question_lower:
+    if "high churn" in question_lower or "churn risk" in question_lower or "at risk of churn" in question_lower:
         query = """
             SELECT TOP 10
                 property_name,
@@ -224,27 +251,6 @@ def sql_agent(question: str) -> str:
                 f"Renewal: {r['renewal_date']} | "
                 f"Risk: {r['churn_risk_label']} | "
                 f"Contract: ${r['contract_value']:,.0f}"
-            )
-
-    else:
-        # Default — show top complaints overview
-        query = """
-            SELECT TOP 5
-                property_name,
-                complaint_count,
-                avg_csat,
-                churn_risk_label,
-                missed_pickups_30d
-            FROM gold_churn_risk
-            ORDER BY complaint_count DESC
-        """
-        label = "Top 5 properties by complaint count"
-        def format_row(r):
-            return (
-                f"Property: {r['property_name']} | "
-                f"Complaints: {r['complaint_count']} | "
-                f"CSAT: {r['avg_csat']} | "
-                f"Risk: {r['churn_risk_label']}"
             )
 
     # ── Run query and format results ──
