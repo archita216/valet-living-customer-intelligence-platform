@@ -1,9 +1,12 @@
 # Valet Living Client Churn & Service Risk Intelligence Agent
 
+![Databricks](https://img.shields.io/badge/Databricks-ETL-EA3E23)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![LangGraph](https://img.shields.io/badge/LangGraph-Multi%20Agent-green)
 ![Langfuse](https://img.shields.io/badge/Langfuse-Observability-orange)
 ![Azure SQL](https://img.shields.io/badge/Azure%20SQL-Database-0078D4)
+![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestration-326CE5)
 
 ## 🎯 Problem Statement
 
@@ -20,14 +23,21 @@ This project builds an AI-powered multi-agent system that helps teams identify s
 
 A multi-agent Retrieval-Augmented Generation (RAG) system powered by LangGraph and Groq LLMs.
 
-The solution combines:
+The solution begins by ingesting raw complaint and feedback data into Databricks, where it is processed through the Medallion Architecture (Bronze → Silver → Gold) using PySpark. The curated gold business tables are then published to Azure SQL Database, providing a structured analytics layer for dashboards and AI agents.
+
+The data foundation is used in two different ways:
+
+- The **Silver RAG table** is used to build the FAISS vector store that powers the RAG chatbot.
+- The **Gold tables in Azure SQL** are used by the SQL Agent for structured analysis and reporting.
+
+On top of this data foundation, the platform combines:
 
 - Structured analytics from Azure SQL
 - Unstructured complaint and service-history retrieval from a FAISS vector database
 - A LangGraph workflow that routes user questions to the right specialized agent
 - Langfuse tracing for observability and monitoring
 
-This creates a practical assistant for client success and retention decision-making.
+Together, these components create an intelligent assistant that helps client success teams proactively identify service issues, detect churn risk, and recommend retention strategies.
 
 ## 🧠 What the Project Does
 
@@ -37,6 +47,7 @@ This project acts as a smart support and retention copilot for Valet Living by a
 - **RAG Agent**: searches historical complaint context stored in a FAISS vector database to understand recurring service issues and customer pain points.
 - **Recommendation Agent**: combines SQL and RAG outputs to produce clear, actionable retention recommendations.
 - **LangGraph Workflow**: orchestrates the flow between agents and connects them into one end-to-end pipeline.
+- **Streamlit Frontend**: provides an interactive interface for asking questions and viewing the results in a polished UI.
 
 ## 🏗️ Architecture
 
@@ -49,6 +60,18 @@ SQL Agent  →  RAG Agent  →  Recommendation Agent
    ↓             ↓                ↓
 Azure SQL   FAISS Vector DB   Groq LLM
 ```
+
+## 🔄 Data Engineering Pipeline
+
+The project follows the Databricks Medallion Architecture to transform raw operational data into AI-ready business datasets.
+
+- **Bronze Layer:** Ingests raw CSV complaint and feedback data into Databricks.
+- **Silver Layer:** Cleanses, validates, standardizes, and enriches the raw records using PySpark transformations.
+- **Silver RAG Table:** Produces the curated complaint context used to build the FAISS vector database for the RAG chatbot.
+- **Gold Layer:** Creates business-ready analytical views, including churn risk analysis, service performance metrics, and property health summaries.
+- **Azure SQL Integration:** Publishes the curated Gold tables to Azure SQL Database, which acts as the structured data source for Power BI dashboards and the SQL Agent within the multi-agent AI system.
+
+This ETL pipeline provides a reliable and scalable data foundation for downstream analytics and AI workloads.
 
 ## 🛠️ Tech Stack
 
@@ -78,6 +101,14 @@ Azure SQL   FAISS Vector DB   Groq LLM
     recommendation_agent.py
     sql_agent.py
 
+app.py
+
+04_databricks/
+    01_ Bronze Ingestion.py
+    02_ Silver Transformation.py
+    03_Gold Business Views.py
+    04_Azure SQL Integration.py
+
 requirements.txt
 README.md
 .env
@@ -92,6 +123,8 @@ Handles structured business questions such as:
 - Which properties have the most missed pickups?
 
 It queries Azure SQL and returns business-focused insights.
+
+If a question does not match one of the predefined SQL intents, the agent returns a clear fallback message instead of inventing a query. The Streamlit UI can then route the question to RAG or show the fallback directly.
 
 ### 2. RAG Agent
 Handles unstructured or contextual questions such as:
@@ -156,6 +189,12 @@ python 02_rag/build_vectordb.py
 
 ```bash
 python 03_agents/langgraph_workflow.py
+```
+
+### Run the Streamlit frontend
+
+```bash
+streamlit run app.py
 ```
 
 ### Run the RAG agent directly
