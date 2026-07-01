@@ -1,0 +1,26 @@
+# Git and GitHub
+.git
+.github
+.gitignore
+
+# Python virtual environment and cache
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment secrets and logs
+.env
+*.log
+build_output.log
+
+# Local vector database index (to keep build context small)
+# The vector DB will be built inside the container or via CI/CD pipelines
+02_rag/valet_vector_db/
+
+# IDE and Editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
